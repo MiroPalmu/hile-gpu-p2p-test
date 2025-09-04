@@ -1,0 +1,16 @@
+#!/bin/bash -l
+#SBATCH --job-name=build
+#SBATCH --output=slurm-%x.out 
+#SBATCH --error=slurm-%x.err 
+#SBATCH --open-mode=truncate
+#SBATCH --partition=hile
+#SBATCH --nodelist=hile-g0[1,2] # We use rocm 6.2 which is not on hile-g03.
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=32
+#SBATCH --gpus-per-node=1       # Allocate one gpu per MPI rank
+#SBATCH --time=0-00:10:00       # Run time (d-hh:mm:ss)
+
+source ./test_env.sh
+
+CC -std=c++23 -x hip -o main main.cpp
