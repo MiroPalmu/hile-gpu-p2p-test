@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --job-name=test
+#SBATCH --job-name=run2
 #SBATCH --output=slurm-%x.out 
 #SBATCH --error=slurm-%x.err 
 #SBATCH --open-mode=truncate
@@ -25,8 +25,13 @@ EOF
 chmod +x ./select_gpu
 
 export MPICH_GPU_SUPPORT_ENABLED=1
-# export MPICH_GPU_IPC_ENABLED=0 # slow but fixes p2p gpu comm
+export MPICH_GPU_IPC_ENABLED=0 # slow but fixes p2p gpu comm
 
-srun ./select_gpu ./main
+echo "main2.cpp: buffsize = 10"
+srun ./select_gpu ./main2
+
+echo "main3.cpp: buffsize = 10 (memset)"
+srun ./select_gpu ./main3
+
  
 rm -f ./select_gpu

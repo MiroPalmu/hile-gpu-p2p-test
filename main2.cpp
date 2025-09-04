@@ -3,49 +3,38 @@
 #include <mpi.h>
 
 int main(int argc, char **argv) {
-  int i,rank,size,bufsize;
-  int *h_buf;
-  int *d_buf;
-  MPI_Status status;
+  MPI_Init(&argc,&argv);
 
+  int *d_buf;
+  int bufsize;
   if (argc >= 2) {
     bufsize=1024;
   } else {
     bufsize=10;
   }
 
-  MPI_Init(&argc,&argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-  //allocate buffers
-  h_buf=(int*) malloc(sizeof(int)*bufsize);
   hipMalloc(&d_buf, bufsize*sizeof(int));
+  // hipMemset(d_buf, 0, bufsize*sizeof(int));
 
-  //initialize buffers
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  int *h_buf=(int*) malloc(sizeof(int)*bufsize);
+
   if(rank==0) {
-    for(i=0;i<bufsize;i++)
+    for(int i=0;i<bufsize;i++)
       h_buf[i]=i;
+
+    hipMemcpy(d_buf, h_buf, bufsize*sizeof(int), hipMemcpyHostToDevice);
+    MPI_Send(d_buf, bufsize, MPI_INT, 1, 123, MPI_COMM_WORLD);
   }
 
   if(rank==1) {
-    for(i=0;i<bufsize;i++)
-      h_buf[i]=-1;
-  }
-
-  hipMemcpy(d_buf, h_buf, bufsize*sizeof(int), hipMemcpyHostToDevice);
-
-  //communication
-  if(rank==0)
-    MPI_Send(d_buf, bufsize, MPI_INT, 1, 123, MPI_COMM_WORLD);
-
-  if(rank==1)
+    MPI_Status status;
     MPI_Recv(d_buf, bufsize, MPI_INT, 0, 123, MPI_COMM_WORLD, &status);
 
-  //validate results
-  if(rank==1) {
     hipMemcpy(h_buf, d_buf, bufsize*sizeof(int), hipMemcpyDeviceToHost);
-    for(i=0;i<bufsize;i++) {
+    for(int i=0;i<bufsize;i++) {
       if(h_buf[i] != i)
         printf("Error: buffer[%d]=%d but expected %d\n", i, h_buf[i], i);
       }

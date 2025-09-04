@@ -14,3 +14,5 @@
 source ./test_env.sh
 
 CC -std=c++23 -x hip -o main main.cpp
+CC -O0 -std=c++23 -x hip -o main2 main2.cpp
+CC -O0 -std=c++23 -x hip -o main3 main3.cpp
